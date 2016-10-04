@@ -1,5 +1,6 @@
+
+
 import sqlite3
-import itertools
 
 conn = sqlite3.connect('database.sqlite')
 c = conn.cursor()
@@ -27,14 +28,6 @@ for name in colname_list:
     if (name[0] == 'K' and name != colname_list[0]):
         request_colnames = request_colnames + ', ' + name
 
-tl = c.execute('SELECT DISTINCT Target FROM Regulations ORDER BY Target').fetchall()
-print([tl1 for tl1, in tl])
-
-target_list = list(itertools.chain(*c.execute('SELECT DISTINCT Target FROM Regulations ORDER BY Target').fetchall()))
-print(target_list)
-
-print(colname_list)
-print(colname_list[ target_list[0] in colname_list[1] ])
 #print(request_colnames)
 #print(create_colnames)
 
