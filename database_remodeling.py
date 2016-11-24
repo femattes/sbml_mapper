@@ -31,9 +31,10 @@ for name in colname_list:
 #print(request_colnames)
 #print(create_colnames)
 
-#c.execute('CREATE TEMPORARY TABLE param_temp(' + request_colnames + ')')
-#c.execute('INSERT INTO param_temp SELECT '+ request_colnames +' FROM Parametrizations')
-#c.execute('DROP TABLE Parametrizations')
-#c.execute('CREATE TABLE Parametrizations(' + create_colnames + ')')
-#c.execute('INSERT INTO Parametrizations(' + request_colnames + ') SELECT ' + request_colnames + ' FROM param_temp')
-#c.execute('DROP TABLE param_temp')
+if False:
+    c.execute('CREATE TEMPORARY TABLE param_temp(' + request_colnames + ')')
+    c.execute('INSERT INTO param_temp SELECT '+ request_colnames +' FROM Parametrizations')
+    c.execute('DROP TABLE Parametrizations')
+    c.execute('CREATE TABLE Parametrizations(' + create_colnames + ')')
+    c.execute('INSERT INTO Parametrizations(' + request_colnames + ') SELECT ' + request_colnames + ' FROM param_temp')
+    c.execute('DROP TABLE param_temp')
