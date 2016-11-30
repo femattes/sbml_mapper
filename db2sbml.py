@@ -24,36 +24,45 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
     # create the Model
     model = document.createModel()
 
-    # Get a QualModelPlugin object plugged in the model object.
+    # get a QualModelPlugin object plugged in the model object.
     mplugin = model.getPlugin("qual")
 
-    # Extract regulatory context descriptions from table Parametrizations
+    # extract regulatory context descriptions from table Parametrizations
+    # get the column names from table Parametrizations
     column_name_list = [tuple[0] for tuple in c.execute("SELECT * FROM Parametrizations").description] # TO DO: exception for invalid/missing model
-
-    #print([column_name[0:2] for column_name in column_name_list])
+    # create a list of all column names which represent regulatory contexts
     context_name_list = [column_name for column_name in column_name_list if column_name[0:2] == 'K_'] # TO DO: index dependent = bad
-
-    #parameter_list = list(c.execute('SELECT ' + ', '.join(context_name_list) + ' FROM Parametrizations WHERE rowid=' + str(modelRow)).fetchall()) # TO DO: depends on single row/unique ID
-
+    # create a list of "targets" (components with incoming regulations)
     target_list = [target for target, in c.execute('SELECT DISTINCT Target FROM Regulations ORDER BY Target').fetchall()]
+
+    # create an internal list of regulatory context descriptions
     context_list = []
     for context_name in context_name_list:
-        target_match_list = [target for target in target_list if context_name[2:].find(target) != -1] # can find multiple e.g. context_name=RafB will match species Raf and RafB
-        target = [match for match in target_match_list if len(match) == max(map(len, target_match_list))][0] # take longest match, TO DO: check if single match?
+        # find the target component matching the context name
+        target_match_list = [target for target in target_list if context_name[2:].find(target) != -1] # can find multiple targets: e.g. context_name="K_RafB_012" will match species Raf and RafB
+        target = [match for match in target_match_list if len(match) == max(map(len, target_match_list))][0] # take the longest match, now "K_RafB_012" will only match RafB and not Raf
+        # extract the threshold states of the regulatory context from the context name
+        # regular expression pattern: find all digits following "K_RafB_" where RafB is the current context target
         pattern = r'(?<=K_{0}_)\d+'.format(target)
-        thresholds_name = re.search(pattern, context_name).group(0) # TO DO: check if length >= 1 ?
-        threshold_list = [int(d) for d in thresholds_name] # TO DO: what about double digit thresholds? --> exception or ignore
+        thresholds_name = re.search(pattern, context_name).group(0) # WILL NOT WORK for components with MaxActivity > 9
+        threshold_list = [int(d) for d in thresholds_name]
         context = [context_name, target]
         context.extend(threshold_list) # each context = list of format [K_Raf_031, Raf, 0, 3, 1]
         context_list.append(context)
 
     # write to qualSBML model
 
+    # set a default compartment (required for all models)
+    compartment = model.createCompartment()
+    compartment.setId("c")
+    compartment.setConstant(True)
+
     # set QualitativeSpecies from Components table
     for name, maxActivity in c.execute('SELECT Name, MaxActivity FROM Components ORDER BY Name').fetchall():
         # create a qualSBML QualitativeSpecies
         qs = mplugin.createQualitativeSpecies()
         qs.setId(name)
+        qs.setCompartment("c")
         qs.setConstant(False)
         qs.setMaxLevel(maxActivity)
         #qs.setName(name)
@@ -88,7 +97,6 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
             # list of regulator threshold states for this context
             source_tstate_list = context[2:]
             # parameter target value of this context
-            #param = c.execute('SELECT ' + context[0] + ' FROM Parametrizations WHERE rowid=' + str(modelRow), (context[0], modelRow)).fetchall()[0][0]
             param = c.execute('SELECT {0} FROM Parametrizations WHERE rowid=?'.format(context[0]), (modelRow,) ).fetchall()[0][0]
 
             # if this context is the context with threshold level = 0 for all regulators, use it as Transition.DefaultTerm in qualSBML
