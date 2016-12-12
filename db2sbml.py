@@ -24,7 +24,7 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
     # create the Model
     model = document.createModel()
 
-    # get a QualModelPlugin object plugged in the model object.
+    # get a QualModelPlugin object plugged into the model object (enables qualSBML interface).
     mplugin = model.getPlugin("qual")
 
     # extract regulatory context descriptions from table Parametrizations
@@ -177,6 +177,10 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
 
                 f.setMath(topASTNode)
 
+    document.checkInternalConsistency()
+    if document.getNumErrors() > 0:
+        print("[Error] SBMLDocument : SBML model invalid or inconsistant, aborting model export.\n Error Log from libSBML:\n{0}".format(document.getErrorLog().toString()))
+        return 1
     libsbml.writeSBML(document, sbml_output_path)
 
 
