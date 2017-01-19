@@ -109,7 +109,7 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
                 f = t.createFunctionTerm()
                 f.setResultLevel(param)
 
-                # list of the ASTNode-tree inequality representations of each regulator
+                # list of the ASTNode-tree inequality representations of each regulatory context
                 f_ASTNode_list = []
 
                 # find lower and upper thresholds (activity interval) of each regulator in this context and build an ASTNode tree of the resulting inequalities
@@ -143,7 +143,7 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
                         ast.addChild(libsbml.ASTNode(source_ASTNode))
                         ast.addChild(threshold_ASTNode)
                     elif rightmost:
-                        ast = libsbml.ASTNode(libsbml.AST_RELATIONAL_GT)
+                        ast = libsbml.ASTNode(libsbml.AST_RELATIONAL_GEQ) # greater equal???
                         threshold_ASTNode = libsbml.ASTNode(libsbml.AST_INTEGER)
                         threshold_ASTNode.setValue(lower_t)
                         ast.addChild(libsbml.ASTNode(source_ASTNode))
@@ -151,7 +151,7 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
                     else:
                         ast = libsbml.ASTNode(libsbml.AST_LOGICAL_AND)
 
-                        lower_t_ASTNode = libsbml.ASTNode(libsbml.AST_RELATIONAL_GT)
+                        lower_t_ASTNode = libsbml.ASTNode(libsbml.AST_RELATIONAL_GEQ) # greater equal???
                         threshold_ASTNode = libsbml.ASTNode(libsbml.AST_INTEGER)
                         threshold_ASTNode.setValue(lower_t)
                         lower_t_ASTNode.addChild(libsbml.ASTNode(source_ASTNode))
@@ -184,7 +184,7 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
     libsbml.writeSBML(document, sbml_output_path)
 
 
-writeDBModelToSBML('database.sqlite', 'db2sbmp_output.xml', modelRow=3)
+writeDBModelToSBML('database.sqlite', 'db2sbml_output.xml', modelRow=3)
 
 
 
