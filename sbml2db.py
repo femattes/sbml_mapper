@@ -7,10 +7,62 @@ import libsbml
 import re
 import validateSBML
 
+class ParseASTError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
 
 def getThresholds(math_AST, sources_dict):
 
-    if(math_AST.getType() == libsbml.AST_NAME):
+    if math_AST.getType() in [libsbml.AST_LOGICAL_AND, libsbml.AST_LOGICAL_OR, libsbml.AST_LOGICAL_NOT, libsbml.AST_LOGICAL_XOR]:
+        print("numchildren: {0}".format(math_AST.getNumChildren()))
+        for i in range(0, math_AST.getNumChildren()-1):
+            print("Logical {0}:".format(i))
+            sources_dict = getThresholds(math_AST.getChild(i), sources_dict)
+
+    elif math_AST.getType() in [libsbml.AST_RELATIONAL_EQ, libsbml.AST_RELATIONAL_GEQ, libsbml.AST_RELATIONAL_GT, libsbml.AST_RELATIONAL_LEQ, libsbml.AST_RELATIONAL_LT, libsbml.AST_RELATIONAL_NEQ]:
+        left = math_AST.getLeftChild()
+        right = math_AST.getRightChild()
+        flipped = False
+
+        if left.getType() == libsbml.AST_INTEGER and right.getType() == libsbml.AST_NAME:
+            tmp = left
+            left = right
+            right = tmp
+            flipped = True
+
+        if left.getType() == libsbml.AST_NAME and right.getType() == libsbml.AST_INTEGER:
+            source = left.getName()
+            print("Source: ", source)
+            int_value = right.getInteger()
+            if math_AST.getType() == libsbml.AST_RELATIONAL_EQ or math_AST.getType() == libsbml.AST_RELATIONAL_NEQ:
+                new_thresholds = [x for x in [int_value, int_value + 1] if x not in sources_dict[source]]
+                sources_dict[source].extend(new_thresholds)
+            elif (math_AST.getType() == libsbml.AST_RELATIONAL_GEQ and not flipped) or (math_AST.getType() == libsbml.AST_RELATIONAL_LEQ and flipped):
+                if int_value not in sources_dict[source]:
+                    sources_dict[source].append(int_value)
+            elif (math_AST.getType() == libsbml.AST_RELATIONAL_LEQ and not flipped) or (math_AST.getType() == libsbml.AST_RELATIONAL_GEQ and flipped):
+                if int_value + 1 not in sources_dict[source]:
+                    sources_dict[source].append(int_value + 1)
+            elif (math_AST.getType() == libsbml.AST_RELATIONAL_GT and not flipped) or (math_AST.getType() == libsbml.AST_RELATIONAL_LT and flipped):
+                if int_value + 1 not in sources_dict[source]:
+                    sources_dict[source].append(int_value + 1)
+            elif (math_AST.getType() == libsbml.AST_RELATIONAL_LT and not flipped) or (math_AST.getType() == libsbml.AST_RELATIONAL_GT and flipped):
+                if int_value not in sources_dict[source]:
+                    sources_dict[source].append(int_value)
+
+        else:
+            print("AAAARGH!")
+            raise ParseASTError("Unexpected mathML in FunctionTerm: Component species may only be compared to integer values by the following relations: =, /=, >=, >=, >, > \n")
+
+    else:
+        print("AAAARGH!")
+        raise ParseASTError("Unexpected mathML in FunctionTerm:\n Lowest level expr. must be relations between component species and integers. \n Only logical and relational operators are allowed.")
+
+    print(sources_dict)
+    return(sources_dict)
 
 
 
@@ -78,6 +130,7 @@ def writeSBMLToDBModel(database_path, sbml_input_path, modelRow=1):
 
     input_transition_effect_is_OK = True
     output_transition_effect_is_OK = True
+    count = 0
     for t in mplugin.getListOfTransitions():
 
         # sources and targets of this transition (2 lists of RefID strings == Qal. species names == component names)
@@ -92,22 +145,31 @@ def writeSBMLToDBModel(database_path, sbml_input_path, modelRow=1):
 
         # get sources for table Regulations
         for input in t.getListOfInputs():
-            source_list.append(output.getQualitativeSpecies())
+            source_list.append(input.getQualitativeSpecies())
             if input.getTransitionEffect() != 0: # logical/multivalued models should have "none" == 0
                 input_transition_effect_is_OK = False
 
         # dictionary for storage of thresholds for each source
         source_threshold_dict = {s:[] for s in source_list}
+        print("\ndict {0}: {1}".format(count, source_threshold_dict))
+        count = count+1
 
         # find thresholds of sources for the TREMPPI regulations which are encoded in this qualSBML transition (t)
         # get transition equalities/inequalities from function terms
         for f in t.getListOfFunctionTerms():
             # get the ASTNode tree of the SBML mathML definition of the function term
             # getMath() returns the top ASTNode of the tree
-            mathTop_ASTNode = f.getMath()
+            math_AST = f.getMath()
+            try:
+                source_threshold_dict = getThresholds(math_AST, source_threshold_dict)
+            except ParseASTError as e:
+                print("[Error] {0} : Couldn't compute Thresholds for FunctionTerm of target {1}. \n{2}".format(sbml_input_path, target_list[0], e.value))
+                return 1
 
-
-
+        for target in target_list:
+            for source in source_list:
+                for threshold in source_threshold_dict[source]:
+                    c.execute('INSERT INTO Regulations VALUES (?,?,?)', (target, source, threshold))
 
 
 
