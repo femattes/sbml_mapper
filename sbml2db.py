@@ -18,7 +18,7 @@ def getThresholds(math_AST, sources_dict):
 
     if math_AST.getType() in [libsbml.AST_LOGICAL_AND, libsbml.AST_LOGICAL_OR, libsbml.AST_LOGICAL_NOT, libsbml.AST_LOGICAL_XOR]:
         print("numchildren: {0}".format(math_AST.getNumChildren()))
-        for i in range(0, math_AST.getNumChildren()-1):
+        for i in range(0, math_AST.getNumChildren()):
             print("Logical {0}:".format(i))
             sources_dict = getThresholds(math_AST.getChild(i), sources_dict)
 
@@ -55,19 +55,31 @@ def getThresholds(math_AST, sources_dict):
 
         else:
             print("AAAARGH!")
-            raise ParseASTError("Unexpected mathML in FunctionTerm: Component species may only be compared to integer values by the following relations: =, /=, >=, >=, >, > \n")
+            raise ParseASTError("Unexpected mathML expression in FunctionTerm: Lowest level expressions must be species~integer comparisons.\nComponent species may only be compared to integer values, and only by the following relations: =, /=, >=, <=, >, < \n")
 
     else:
         print("AAAARGH!")
-        raise ParseASTError("Unexpected mathML in FunctionTerm:\n Lowest level expr. must be relations between component species and integers. \n Only logical and relational operators are allowed.")
+        raise ParseASTError("Unexpected mathML expression in FunctionTerm: Only logical and relational mathML operators are allowed.")
 
     print(sources_dict)
     return(sources_dict)
 
+#end getThresholds
 
 
 
-def writeSBMLToDBModel(database_path, sbml_input_path, modelRow=1):
+
+'''
+Function writeSBMLToDBModel
+Input parameters:
+    1) database_path: url where the TREMPPI model database is to be created; existing files/databases at this url will be deleted
+    2) sbml_input_path: url of the qualSBML input file
+Output:
+    0 for successfully parsed qualSBML file
+    1 in case of errors
+    If qualSBML file is successfully parsed, a model database is created at database_path
+'''
+def writeSBMLToDBModel(database_path, sbml_input_path):
 
     # read file
     if not os.path.exists(sbml_input_path):
@@ -113,8 +125,7 @@ def writeSBMLToDBModel(database_path, sbml_input_path, modelRow=1):
     c.execute('CREATE TABLE Components (Name TEXT, MaxActivity INTEGER)')
     qs_list = mplugin.getListOfQualitativeSpecies()
     MA_is_set = True
-    for i in range(1, qs_list.size()):
-        qs = qs_list.get(i)
+    for qs in qs_list:
         Name = qs.getId()
         if qs.isSetMaxLevel():
             MaxActivity = qs.getMaxLevel()
@@ -126,7 +137,7 @@ def writeSBMLToDBModel(database_path, sbml_input_path, modelRow=1):
         print("[Warning] {0} : Maximum activity level not set in SBML file for at least one species. Calculating maximum activity from model logic.\n".format(sbml_input_path))
 
     # Table Regulations
-    c.execute('CREATE TABLE Regulations (Target TEXT, Source TEXT, Threshold INTEGER)')
+    c.execute('CREATE TABLE Regulations (Source TEXT, Target TEXT, Threshold INTEGER)')
 
     input_transition_effect_is_OK = True
     output_transition_effect_is_OK = True
@@ -166,10 +177,18 @@ def writeSBMLToDBModel(database_path, sbml_input_path, modelRow=1):
                 print("[Error] {0} : Couldn't compute Thresholds for FunctionTerm of target {1}. \n{2}".format(sbml_input_path, target_list[0], e.value))
                 return 1
 
+        print("filling database, source_threshold_dict={0}, target_list={1}, source_list={2}".format(source_threshold_dict,target_list,source_list))
         for target in target_list:
             for source in source_list:
+                #print(source_threshold_dict[source])
                 for threshold in source_threshold_dict[source]:
-                    c.execute('INSERT INTO Regulations VALUES (?,?,?)', (target, source, threshold))
+                    #print("target: {0}, source: {1}, threshold: {2}".format(target, source, threshold))
+                    c.execute('INSERT INTO Regulations VALUES (?,?,?)', (source, target, threshold))
+
+    conn.commit()
+    return(0)
+
+#end writeSBMLToDBModel
 
 
 

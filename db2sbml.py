@@ -113,7 +113,7 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
                 f_ASTNode_list = []
 
                 # find lower and upper thresholds (activity interval) of each regulator in this context and build an ASTNode tree of the resulting inequalities
-                for source_index in range(0, len(source_list)-1):
+                for source_index in range(0, len(source_list)):
                     source = source_list[source_index]
                     source_tstate = source_tstate_list[source_index]
                     threshold_list, = c.execute('SELECT Threshold FROM Regulations WHERE Target=? AND Source=? ORDER BY Threshold', (target, source)).fetchall()
