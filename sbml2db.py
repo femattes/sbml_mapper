@@ -5,7 +5,7 @@ import sqlite3
 import libsbml
 #from libsbml import *
 import re
-import validateSBML
+import itertools
 
 class ParseASTError(Exception):
     def __init__(self, value):
@@ -17,9 +17,9 @@ class ParseASTError(Exception):
 def getThresholds(math_AST, sources_dict):
 
     if math_AST.getType() in [libsbml.AST_LOGICAL_AND, libsbml.AST_LOGICAL_OR, libsbml.AST_LOGICAL_NOT, libsbml.AST_LOGICAL_XOR]:
-        print("numchildren: {0}".format(math_AST.getNumChildren()))
+        #print("numchildren: {0}".format(math_AST.getNumChildren()))
         for i in range(0, math_AST.getNumChildren()):
-            print("Logical {0}:".format(i))
+            #print("Logical {0}:".format(i))
             sources_dict = getThresholds(math_AST.getChild(i), sources_dict)
 
     elif math_AST.getType() in [libsbml.AST_RELATIONAL_EQ, libsbml.AST_RELATIONAL_GEQ, libsbml.AST_RELATIONAL_GT, libsbml.AST_RELATIONAL_LEQ, libsbml.AST_RELATIONAL_LT, libsbml.AST_RELATIONAL_NEQ]:
@@ -35,7 +35,7 @@ def getThresholds(math_AST, sources_dict):
 
         if left.getType() == libsbml.AST_NAME and right.getType() == libsbml.AST_INTEGER:
             source = left.getName()
-            print("Source: ", source)
+            #print("Source: ", source)
             int_value = right.getInteger()
             if math_AST.getType() == libsbml.AST_RELATIONAL_EQ or math_AST.getType() == libsbml.AST_RELATIONAL_NEQ:
                 new_thresholds = [x for x in [int_value, int_value + 1] if x not in sources_dict[source]]
@@ -54,14 +54,14 @@ def getThresholds(math_AST, sources_dict):
                     sources_dict[source].append(int_value)
 
         else:
-            print("AAAARGH!")
+            print("getThresholds 1 Error")
             raise ParseASTError("Unexpected mathML expression in FunctionTerm: Lowest level expressions must be species~integer comparisons.\nComponent species may only be compared to integer values, and only by the following relations: =, /=, >=, <=, >, < \n")
 
     else:
-        print("AAAARGH!")
+        print("getThresholds 2 Error")
         raise ParseASTError("Unexpected mathML expression in FunctionTerm: Only logical and relational mathML operators are allowed.")
 
-    print(sources_dict)
+    #print(sources_dict)
     return(sources_dict)
 
 #end getThresholds
@@ -141,6 +141,7 @@ def writeSBMLToDBModel(database_path, sbml_input_path):
 
     input_transition_effect_is_OK = True
     output_transition_effect_is_OK = True
+    context_list = []
     count = 0
     for t in mplugin.getListOfTransitions():
 
@@ -162,7 +163,7 @@ def writeSBMLToDBModel(database_path, sbml_input_path):
 
         # dictionary for storage of thresholds for each source
         source_threshold_dict = {s:[] for s in source_list}
-        print("\ndict {0}: {1}".format(count, source_threshold_dict))
+        #print("\ndict {0}: {1}".format(count, source_threshold_dict))
         count = count+1
 
         # find thresholds of sources for the TREMPPI regulations which are encoded in this qualSBML transition (t)
@@ -177,13 +178,25 @@ def writeSBMLToDBModel(database_path, sbml_input_path):
                 print("[Error] {0} : Couldn't compute Thresholds for FunctionTerm of target {1}. \n{2}".format(sbml_input_path, target_list[0], e.value))
                 return 1
 
-        print("filling database, source_threshold_dict={0}, target_list={1}, source_list={2}".format(source_threshold_dict,target_list,source_list))
+        #print('std: ', source_threshold_dict)
+
+        #print("filling table Regulations, source_threshold_dict={0}, target_list={1}, source_list={2}".format(source_threshold_dict,target_list,source_list))
         for target in target_list:
             for source in source_list:
                 #print(source_threshold_dict[source])
                 for threshold in source_threshold_dict[source]:
                     #print("target: {0}, source: {1}, threshold: {2}".format(target, source, threshold))
                     c.execute('INSERT INTO Regulations VALUES (?,?,?)', (source, target, threshold))
+
+        for target in target_list:
+            thresholds_list_with_lower_zeros = [[0] + source_threshold_dict[s] for s in source_list]
+            context_threshold_states = list(itertools.product(*thresholds_list_with_lower_zeros))
+            #print('cts: ', context_threshold_states)
+            for cts in context_threshold_states:
+                context = 'K_{0}_{1}'.format(target, ''.join([str(t) for t in cts]))
+                context_list.append(context)
+
+    print('cl: ', context_list)
 
     conn.commit()
     return(0)
