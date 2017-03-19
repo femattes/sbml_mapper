@@ -11,8 +11,19 @@ import re
 def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
 
     # Create the connection to the SQLite model database
-    conn = sqlite3.connect(database_path) # TO DO: exception for failed connection
+    conn = sqlite3.connect(database_path)
     c = conn.cursor()
+    try:
+        conn = sqlite3.connect(database_path)
+        c = conn.cursor()
+    except sqlite3.OperationalError:
+        print("[Error] {0} : Could not connect to database at this location.\n".format(database_path))
+        return 1
+
+    c.execute("SELECT COUNT (*) FROM Parametrizations")
+    rowcount = c.fetchone()[0]
+    if modelRow > rowcount:
+        print("[Error] {0} : Cannot select row {1} from table Parametrizations with {2} rows. Aborting model export\n".format(database_path, modelRow, rowcount))
 
     # Create an SBMLNamespaces object with the given SBML level, version
     # package name, package version.
@@ -47,14 +58,14 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
         thresholds_name = re.search(pattern, context_name).group(0) # WILL NOT WORK for components with MaxActivity > 9
         threshold_list = [int(d) for d in thresholds_name]
         context = [context_name, target]
-        context.extend(threshold_list) # each context = list of format [K_Raf_031, Raf, 0, 3, 1]
+        context.extend(threshold_list) # each context = list of format ['K_Raf_031', 'Raf', 0, 3, 1]
         context_list.append(context)
 
     # write to qualSBML model
 
     # set a default compartment (required for all models)
     compartment = model.createCompartment()
-    compartment.setId("c")
+    compartment.setId("default")
     compartment.setConstant(True)
 
     # set QualitativeSpecies from Components table
@@ -62,10 +73,10 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
         # create a qualSBML QualitativeSpecies
         qs = mplugin.createQualitativeSpecies()
         qs.setId(name)
-        qs.setCompartment("c")
+        qs.setCompartment("default")
         qs.setConstant(False)
         qs.setMaxLevel(maxActivity)
-        #qs.setName(name)
+        qs.setName(name)
 
     # set Transitions from Regulations and Parametrizations tables
     for target, in c.execute('SELECT DISTINCT Target FROM Regulations ORDER BY Target').fetchall():
@@ -116,18 +127,19 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
                 for source_index in range(0, len(source_list)):
                     source = source_list[source_index]
                     source_tstate = source_tstate_list[source_index]
-                    threshold_list, = c.execute('SELECT Threshold FROM Regulations WHERE Target=? AND Source=? ORDER BY Threshold', (target, source)).fetchall()
+                    threshold_list = list(c.execute('SELECT Threshold FROM Regulations WHERE Target=? AND Source=? ORDER BY Threshold', (target, source)).fetchall())
+                    print(threshold_list)
                     lower_t = 0
+                    upper_t = threshold_list[0][0]
                     leftmost = True
-                    upper_t = threshold_list[0]
                     rightmost = False
                     threshold_index = 0
                     while source_tstate > lower_t:
-                        lower_t = threshold_list[threshold_index]
+                        lower_t = threshold_list[threshold_index][0]
                         threshold_index += 1
                         leftmost = False
                     if len(threshold_list) > threshold_index:
-                        upper_t = threshold_list[threshold_index]
+                        upper_t = threshold_list[threshold_index][0]
                     else:
                         upper_t = c.execute('SELECT MaxActivity FROM Components WHERE Name=?', (source,)).fetchall()[0]
                         rightmost = True
@@ -184,7 +196,8 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
     libsbml.writeSBML(document, sbml_output_path)
 
 
-writeDBModelToSBML('database.sqlite', 'db2sbml_output.xml', modelRow=3)
+#writeDBModelToSBML('./data/databases/bacteriophage.sqlite', './data/sbml/db2sbml_output.sbml', modelRow=3)
+writeDBModelToSBML('./data/databases/modelDB.sqlite', './data/sbml/db2sbml_output.sbml', modelRow=1)
 
 
 

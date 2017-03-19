@@ -1,0 +1,21 @@
+
+CorticalAreaDevelopment_cellCollective_boolean.sbml
+from: CellCollective
+created: 17.3.2013
+last updated: 22.1.2016
+References:
+Giacomantonio CE and Goodhill GJ.A Boolean model of the gene regulatory network underlying Mammalian cortical area development.PLoS Comput Biol 2010 Sep 166; (9).pmid:20862356
+
+MammalianCellCycle_cellCollective_boolean.sbml
+from: CellCollective
+created: 14.5.2014
+last updated: 29.3.2016
+References:
+Fauré A, Naldi A, Chaouiya C, and Thieffry D.Dynamical analysis of a generic Boolean model for the control of the mammalian cell cycle.Bioinformatics 2006 Jul 1522; (14) e124-31.pmid:16873462
+
+NotchPathway_ginsim_multiValued.sbml
+from: GINsim
+created: 12.06.2013.zginml
+last updated: ??
+References:
+Mbodj A, Junion G, Brun C, Furlong EEM, Thieffry D. Logical modelling of Drosophila signalling pathways. Mol Biosyst. 2013 Sep;9(9):2248-58 .pmid:23868318
