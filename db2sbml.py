@@ -127,8 +127,8 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
                 for source_index in range(0, len(source_list)):
                     source = source_list[source_index]
                     source_tstate = source_tstate_list[source_index]
-                    threshold_list = list(c.execute('SELECT Threshold FROM Regulations WHERE Target=? AND Source=? ORDER BY Threshold', (target, source)).fetchall())
-                    print(threshold_list)
+                    threshold_list = c.execute('SELECT Threshold FROM Regulations WHERE Target=? AND Source=? ORDER BY Threshold', (target, source)).fetchall()
+                    #print(threshold_list)
                     lower_t = 0
                     upper_t = threshold_list[0][0]
                     leftmost = True

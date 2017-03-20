@@ -353,17 +353,17 @@ def writeSBMLToDBModel(database_path, sbml_input_path, use_species_name_attribut
 
 
 # read from own last output sbml file
-#writeSBMLToDBModel("./data/databases/modelDB2.sqlite", "./data/sbml/db2sbml_output.sbml")
+writeSBMLToDBModel("./data/databases/modelDB2.sqlite", "./data/sbml/db2sbml_output.sbml")
 
 # CorticalAreaDevelopment
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/CorticalAreaDevelopment_cellCollective_boolean.sbml")
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/CorticalAreaDevelopment_cellCollective_boolean.sbml", use_species_name_attribute=True)
 
-# MammalianCellCycle2006
+# MammalianCellCycle
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/MammalianCellCycle_cellCollective_boolean.sbml")
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/MammalianCellCycle_cellCollective_boolean.sbml", use_species_name_attribute=True)
 
 
-# ginsim
-#writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/ginsim_example.sbml", use_species_name_attribute=False)
-writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/NotchPathway_ginsim_multiValued.sbml", use_species_name_attribute=False)
+# NotchPathway
+#writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/NotchPathway_ginsim_multiValued.sbml", use_species_name_attribute=False)
+#writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/NotchPathway_ginsim_multiValued.sbml", use_species_name_attribute=True)
