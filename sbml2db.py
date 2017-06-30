@@ -378,17 +378,17 @@ def writeSBMLToDBModel(database_path, sbml_input_path, use_species_name_attribut
 
 ## Example models
 
-# CorticalAreaDevelopment
+# SBML to DB import example 1: Cortical Area Development
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/CorticalAreaDevelopment_cellCollective_boolean.sbml")
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/CorticalAreaDevelopment_cellCollective_boolean.sbml", use_species_name_attribute=True)
 
-# MammalianCellCycle
+# SBML to DB import example 2: Mammalian Cellcycle
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/MammalianCellCycle_cellCollective_boolean.sbml")
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/MammalianCellCycle_cellCollective_boolean.sbml", use_species_name_attribute=True)
 
-# NotchPathway
+# SBML to DB import example 3: Notch Pathway
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/NotchPathway_ginsim_multiValued.sbml", use_species_name_attribute=False)
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/NotchPathway_ginsim_multiValued.sbml", use_species_name_attribute=True)
 
 # read from last output file of the export function "writeDBModelToSBML"
-writeSBMLToDBModel("./data/databases/modelDB2.sqlite", "./data/sbml/db2sbml_output.sbml")
+#writeSBMLToDBModel("./data/databases/modelDB2.sqlite", "./data/sbml/db2sbml_output.sbml")

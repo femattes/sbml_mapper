@@ -252,8 +252,11 @@ def writeDBModelToSBML(database_path, sbml_output_path, modelRow=1):
 # end writeDBModelToSBML
 
 
-#writeDBModelToSBML('./data/databases/bacteriophage.sqlite', './data/sbml/db2sbml_output.sbml', modelRow=3)
-writeDBModelToSBML('./data/databases/modelDB.sqlite', './data/sbml/db2sbml_output.sbml', modelRow=1)
+# DB to SBML export example 1: Bacteriophage
+#writeDBModelToSBML('./data/databases/bacteriophage.sqlite', './data/sbml/db2sbml_output.sbml', modelRow=1)
+
+# DB to SBML export example 2: Export previously imported SBML model back to SBML
+#writeDBModelToSBML('./data/databases/modelDB.sqlite', './data/sbml/db2sbml_output.sbml', modelRow=1)
 
 
 
