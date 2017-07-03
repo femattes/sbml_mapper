@@ -19,7 +19,7 @@ if a parsing error occurrs.
 
 A TREMPPI model (defined by a single row in database table *Parametrizations*) which is exported
 with this tool will result in an SBML file which contains the relevant information for the full set of component interactions and
-regulatory contexts in the model database, even if some of them are unobservable for the given model. This file satisfies
+regulatory contexts in the model database, even if some of them are unobservable for the given model. The file satisfies
 all requirements for the SBML format, but it may contain unnecessary information for the specific model, to ensure no
 information about the model regulatory network is lost.
 

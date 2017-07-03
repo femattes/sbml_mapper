@@ -388,6 +388,7 @@ def writeSBMLToDBModel(database_path, sbml_input_path, use_species_name_attribut
 
 # SBML to DB import example 3: Notch Pathway
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/NotchPathway_ginsim_multiValued.sbml", use_species_name_attribute=False)
+# The notch Pathway model does not have Species name Attributes set, as such running the tool with this line will fail and throw an exception.
 #writeSBMLToDBModel("./data/databases/modelDB.sqlite", "./data/sbml/NotchPathway_ginsim_multiValued.sbml", use_species_name_attribute=True)
 
 # read from last output file of the export function "writeDBModelToSBML"
