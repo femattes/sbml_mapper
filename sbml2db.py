@@ -1,4 +1,3 @@
-
 #
 import os.path
 import sqlite3
@@ -73,10 +72,6 @@ def computeThresholds(math_AST, source_threshold_dict, species_Id_maxActivity_di
         raise ParseASTError("[Error] computeThresholds: Unexpected mathML expression in FunctionTerm: Only logical and relational mathML operators are allowed. \n")
 
 #end computeThresholds
-
-
-
-
 
 '''
 Function evaluateContext
@@ -160,6 +155,25 @@ Output:
 '''
 def writeSBMLToDBModel(database_path, sbml_input_path, use_species_name_attribute=False, print_warnings=True):
 
+    #print("Database connection established!\n")
+    # database connection: remove existing files from database_path and create a new database and corresponding connection
+    try:
+        if os.path.isfile(database_path):
+            os.remove(database_path)
+        conn = sqlite3.connect(database_path)
+    except sqlite3.OperationalError as e:
+        raise Exception("[Error] writeSBMLToDBModel; {0} : Could not create database at this location.\n{1}".format(database_path, e.value))
+
+    try:
+        _writeSBMLToDBModel(conn, database_path, sbml_input_path, use_species_name_attribute, print_warnings)
+    except Exception as e:
+        conn.close()
+        raise  e
+
+    conn.close()
+
+def _writeSBMLToDBModel(conn, database_path, sbml_input_path, use_species_name_attribute, print_warnings):
+    c = conn.cursor()
     # read file
     if not os.path.exists(sbml_input_path):
         raise Exception("[Error] {0} : no such file.\n".format(sbml_input_path))
@@ -192,16 +206,6 @@ def writeSBMLToDBModel(database_path, sbml_input_path, use_species_name_attribut
     # get a QualModelPlugin object plugged into the model object (enables qualSBML interface).
     mplugin = model.getPlugin("qual")
 
-    # database connection: remove existing files from database_path and create a new database and corresponding connection
-    try:
-        if os.path.isfile(database_path):
-            os.remove(database_path)
-        conn = sqlite3.connect(database_path)
-        c = conn.cursor()
-    except sqlite3.OperationalError as e:
-        raise Exception("[Error] writeSBMLToDBModel; {0} : Could not create database at this location.\n{1}".format(database_path, e.value))
-
-    #print("Database connection established!\n")
 
     # Selection and checks of species names to be used for the TREMPPI database:
     # Since the SBML exporter tool (db2sbmp.py) does not work with component names with underscores "_" and the QualitativeSpecies:Name attribute is not guaranteed to be unique,
@@ -372,7 +376,7 @@ def writeSBMLToDBModel(database_path, sbml_input_path, use_species_name_attribut
     # commit database changes
     conn.commit()
 
-#end writeSBMLToDBModel
+    #end writeSBMLToDBModel
 
 
 
