@@ -61,7 +61,7 @@ To use it, simply pass the appropriate parameters to the two interface functions
     Output:
         If the qualSBML file is successfully parsed, a model database is created at database_path.
 
-##### Export SBML Model File
+##### Export Database to SBML
 
     Function writeDBModelToSBML(database_path, sbml_output_path, modelRow=1)
 
@@ -73,8 +73,21 @@ To use it, simply pass the appropriate parameters to the two interface functions
         3) modelRow (Integer): The row of database table "Parametrizations" to be exported as qualSBML.
         Row indexing starts at 1 rather than 0. (Default setting: 1)
 
+ ##### Convert Network To Editor Model
+
+    Function database_to_editor(comps, regs)
+
+    Converts a set of components and regulations to an editor model dictionary.
+
+    Input paramteres:
+        1) comps (List): A list of components in the pairs (name (String), max_value (Integer))
+        2) regs (List): A list of regulations in the triplets (source (String), threshold (Integer), target (String))
+
     Output:
-        If no error occurs, a qualSBML file of the specified model is created at sbml_output_path.
+        A dictionary in the TREMPPI editor format. Can be later written to a file recognized as a TREMPPI network.
+
+
+
 
 
 ### Examples
@@ -129,5 +142,3 @@ by uncommenting the line to export *modelDB.sqlite*. Either way, the resulting S
     Publication Reference:
     Mbodj A, Junion G, Brun C, Furlong EEM, Thieffry D; Logical modelling of Drosophila signalling pathways;
     2013 Sep; Mol Biosyst.; 9(9):2248-58; pmid:23868318
-
-
